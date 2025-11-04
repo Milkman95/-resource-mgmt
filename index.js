@@ -11,6 +11,8 @@ app.post('/add-resource', addResource);
 app.get('/', (req, res) => {
     res.sendFile(__dirname + "/public/" + startPage);
 })
+const { viewResources } = require('./utils/ViewResourceUtil')
+app.get('/view-resources', viewResources)
 server = app.listen(PORT, function () {
     const address = server.address();
     const baseUrl = `http://${address.address == "::" ? 'localhost' :
