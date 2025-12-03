@@ -56,4 +56,51 @@ test.describe('Resource Mgmt CRUD Frontend Tests', () => {
     // Assert it is visible
     await expect(row).toBeVisible();
   });
+  test('View Resources', async ({ page, browserName }) => {
+    await page.goto(BASE_URL);
+    // Table should be visible
+    await expect(page.locator('table')).toBeVisible();
+    // Verify existing keyboard resource
+    const row = page.locator('table tr', { hasText: `Keyboard-${browserName}` });
+    await expect(row).toBeVisible();
+  });
+
+  test('Edit Resource', async ({ page, browserName }) => {
+    await page.goto(BASE_URL);
+    // Pick a resource to edit
+    const row = page.locator('table tr', { hasText: `Monitor-${browserName}` });
+    await row.locator('button:has-text("Edit")').click();
+    const newName = `Updated Monitor-${browserName}`;
+    // Fill edit form
+    await page.fill('#editName', newName);
+    await page.fill('#editLocation', 'Room 102');
+    await page.fill('#editDescription', 'HP 32 inch Monitor');
+    // Accept confirmation dialog when clicking Update
+    page.once('dialog', dialog => dialog.accept());
+    // Submit update
+    await page.click('button:has-text("Update Resource")');
+    // Wait for modal to close (Bootstrap modal adds 'fade' class)
+    await page.waitForSelector('#resourceModal', { state: 'hidden', timeout: 10000 });
+    // Wait for table row to update
+    const updatedRow = page.locator('#tableContent tr', { hasText: newName });
+    await expect(updatedRow).toBeVisible({ timeout: 10000 });
+    // Verify updated fields
+    await expect(updatedRow.locator('td').nth(1)).toHaveText(newName); // name
+    await expect(updatedRow.locator('td').nth(2)).toHaveText('Room 102'); // Location
+    await expect(updatedRow.locator('td').nth(3)).toHaveText('HP 32 inch Monitor'); //Description
+  });
+  test('Delete Resource', async ({ page, browserName }) => {
+    await page.goto(BASE_URL);
+    // Pick a resource to delete
+    const resourceName = `Laptop-${browserName}`;
+    const row = page.locator('#tableContent tr', { hasText: resourceName });
+    await expect(row).toHaveCount(1);
+    // Accept confirmation dialog when clicking Delete
+    page.once('dialog', dialog => dialog.accept());
+    // Delete
+    await row.locator('button:has-text("Delete")').click();
+    // Wait for row to be removed
+    await expect(page.locator('#tableContent tr', { hasText: resourceName })).toHaveCount(0,
+      { timeout: 10000 });
+  });
 });
