@@ -40,6 +40,32 @@ describe('Unit Tests for Utils', () => {
         expect(response[0].name).toEqual('Test Resource');
 
     });
+
+    it('addResource should encounter ENOENT error', async () => {
+        // Mock template file so it has an initial array
+        fs.readFile.mockRejectedValueOnce({ code: 'ENOENT' });
+        const templateData = JSON.stringify([]);
+        fs.readFile.mockResolvedValueOnce(templateData); // this resolves the template file
+        fs.writeFile.mockResolvedValue();
+        const req = {
+            body: {
+                name: 'Test Resource',
+                location: 'Room 101',
+                description: 'Projector and screen',
+                owner: 'user@example.com'
+            }
+        };
+        const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+        await addResource(req, res);
+        expect(res.status).toHaveBeenCalledWith(201);
+        // Extract the response
+        const response = res.json.mock.calls[0][0];
+        // Verify that the last resource matches our input
+        expect(response.length).toEqual(1);
+        expect(response[0].name).toEqual('Test Resource');
+
+    });
+
     it('viewResources should return resources', async () => {
         const mockData = JSON.stringify([
             {

@@ -57,6 +57,32 @@ test.describe('Resource Mgmt CRUD Frontend Tests', () => {
     // Assert it is visible
     await expect(row).toBeVisible();
   });
+  test('Create Resource - front end error test', async ({ page, browserName }) => {
+    await page.goto(BASE_URL);
+    const resourceName = `Projector-${browserName}`;
+    // Open modal
+    await page.click('button:has-text("Add Resource")');
+    // Fill form
+    await page.fill('#name', resourceName);
+    await page.fill('#location', 'Room 101');
+    await page.fill('#description', 'HD Projector');
+    await page.fill('#owner', 'admin@example.com');
+    await page.route('**/add-resource', route => {
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Unable to add Resource' }),
+      });
+    });
+    // Submit the new resource
+    await page.click('button:has-text("Add New Resource")');
+    // Accept confirmation dialog
+    page.once('dialog', dialog => {
+      expect(dialog.message()).toBe('Unable to add resource!')
+      dialog.accept();
+    })
+
+  });
   test('View Resources', async ({ page, browserName }) => {
     await page.goto(BASE_URL);
     // Table should be visible
